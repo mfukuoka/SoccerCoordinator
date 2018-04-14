@@ -44,3 +44,28 @@ let player18: [String: Any] = ["name":"Herschel Krustofski", "height": 45, "expe
 //add all player Dictonaries to an array of type [String: Any]
 let players = [player1,player2,player3,player4,player5,player6,player7,player8,player9,player10,player11,player12,player13,player14,player15,player16,player17,player18]
 
+//Ensure each team has the same number of experienced players.
+var experiencedPlayers: [[String: Any]] = []
+var inexperiencedPlayers: [[String: Any]] = []
+
+//split players by experience
+for player in players {
+    let isExperienced = player["experienced"] as! Bool
+    if isExperienced{
+        experiencedPlayers.append(player)
+    }
+    else{
+        inexperiencedPlayers.append(player)
+    }
+}
+
+//distrubute players evenly into three teams
+var teamSharks: [[String:Any]] = []
+var teamDragons: [[String:Any]] = []
+var teamRaptors: [[String:Any]] = []
+
+//warning there isn't enough experienced players to be evenly spaced.
+if experiencedPlayers.count % 3 != 0 {
+    print("Warning: There isn't enough experienced players to be evenly spaced between three teams. Total Experienced Players: \(experiencedPlayers.count)")
+}
+
