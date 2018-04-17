@@ -39,7 +39,7 @@ let player17: [String: Any] = ["name":"Les Clay", "height": 42.0, "experienced":
 let player18: [String: Any] = ["name":"Herschel Krustofski", "height": 45.0, "experienced": true, "guardians": "Hyman and Rachel Krustofski"]
 
 //add all player dictionaries to an array.
-let players = [player1,player10,player12,player14,player2,player5,player17,player18,player15,player3,player4,player6,player16,player9,player8,player7,player13,player11]
+let players = [player1,player2,player3,player4,player5,player6,player7,player8,player9,player10,player11,player12,player13,player14,player15,player16,player17,player18]
 
 //soccer leauge has three teams.
 var teamSharks: (team: [[String:Any]], teamName: String) = (team: [], teamName: "Sharks")
@@ -60,14 +60,40 @@ func calculateAverageHeight(ofTeam team: [[String:Any]]) -> Double{
     return totalHeight / playerCount
 }
 
-//function to move a player to the end of an array
-func movePlayerToEnd(ofGroup group: [[String: Any]]) -> [[String: Any]]{
-    var moved: [[String: Any]] = []
-    let groupCount = group.count - 2
-    for index in 0...groupCount {
-        moved.append(group[index + 1])
+//enhanced bubble sort with option to return results desc
+func bubbleSort(group: [[String: Any]], reverseOrder: Bool) -> [[String: Any]]{
+    var player: [String: Any] = [:]
+    var moved: [[String: Any]] = group
+    var swapped = false
+    var isSorted = false
+    
+    //check elements in the array index plus one to see if their value is greater than the current.
+    //if it is use a temporary variable to hold the current, move the index plus one variable to the current,
+    //and then move the temporary variable to index plus one; swapping them in sequence.
+    while !isSorted {
+        for i in 0..<moved.count - 1 {
+            swapped = false
+            for j in 0..<moved.count - i - 1 {
+                if moved[j]["height"] as! Double > moved[j + 1]["height"] as! Double {
+                    player = moved[j]
+                    moved[j] = moved[j + 1]
+                    moved[j + 1] = player
+                    swapped = true
+                }
+            }
+        }
+        if !swapped {
+               isSorted = true
+           }
     }
-    moved.append(group[0])
+    //reverse so key "height" is desc
+    if reverseOrder {
+        var reversed: [[String: Any]] = []
+        for index in 0...moved.count-1 {
+            reversed.append(moved[moved.count-index-1])
+        }
+        return reversed
+    }
     return moved
 }
 
@@ -94,18 +120,17 @@ func returnMax(team: [(Double, String)]) -> Double{
 }
 
 //function to sort players into teams by passing an array of "teams"(tuples) and an array of players (dictonaries). Function returns the teams sorted with an average height and range
-func sortPlayers(intoTeams teams: [(team: [[String:Any]],teamName: String)], players: [[String:Any]]) -> (teams: [(team: [[String:Any]],teamName: String)], isSorted: Bool, averageHeights: [(averageHeight: Double,teamName: String)], range: Double){
+func sortPlayers(intoTeams teams: [(team: [[String:Any]],teamName: String)], players: [[String:Any]]) -> (teams: [(team: [[String:Any]],teamName: String)], isSorted: (result: Bool, message: String), averageHeights: [(averageHeight: Double,teamName: String)], range: Double){
+    
+    var message = ""
     var isSortable = false
-    var failed = false
     var sortedTeams = teams
     var teamsAverageHeights: [(averageHeight: Double,teamName: String)] = []
     var finalRange: Double = 0.0
-    var rotator:Int = 2
     
     //can we have even teams?
     if players.count % teams.count != 0 {
-        print("Warning: The number of players isn't enough to evenly space them between the number of teams supplied.")
-        failed = true
+        message += "Warning: The number of players isn't enough to evenly space them between the number of teams supplied.\n"
     }
     else{
     //split players into two groups experienced and non experienced players.
@@ -122,143 +147,103 @@ func sortPlayers(intoTeams teams: [(team: [[String:Any]],teamName: String)], pla
         }
     }
         
-    //are there an even number of experienced players
+    //are there an even number of experienced players?
     if experiencedPlayers.count % teams.count != 0 {
-        print("Warning: The number of experienced players can't be distributed evenly between teams.")
-        failed = true
+        message += "Warning: The number of experienced players can't be distributed evenly between teams.\n"
     }
-    
-    //reiterate and alternate using rotator variable to help randomize results.
-    //exit loop if totalTrys is reached or isSorted equals true
-    var attempts = 0
-    let totalTrys = 300
-    while !failed {
-        var index = 0
-        let teamsCount = sortedTeams.count
-       
-        //add players to each team
-        if rotator % 2 == 0 {
-                for player in experiencedPlayers {
-                    if index<teamsCount {
-                        sortedTeams[index].team.append(player)
-                        index += 1
-                        if(index == teamsCount){
-                            index = 0
-                        }
-                    }
-                }
-                for player in inexperiencedPlayers {
-                    if index<teamsCount {
-                        sortedTeams[teamsCount - 1 - index].team.append(player)
-                        index += 1
-                        if(index == teamsCount){
-                            index = 0
-                        }
-                    }
-                }
-            rotator = 1
-        }
-        else{
-            for player in inexperiencedPlayers {
-                if index<teamsCount {
-                    sortedTeams[teamsCount - 1 - index].team.append(player)
-                    index += 1
-                    if(index == teamsCount){
-                        index = 0
-                    }
-                }
-            }
-            for player in experiencedPlayers {
-                if index<teamsCount {
-                    sortedTeams[index].team.append(player)
-                    index += 1
-                    if(index == teamsCount){
-                        index = 0
-                    }
-                }
-            }
-            rotator = 2
-        }
-      
-        //get average height of teams
-        teamsAverageHeights = []
-        for sorted in sortedTeams{
-            teamsAverageHeights.append((averageHeight: calculateAverageHeight(ofTeam: sorted.team),teamName: sorted.teamName))
-        }
+    else{
+        //use the bubbleSort function to organize the players
+        //reverse the order on one of them to make height distribution fair
+        experiencedPlayers = bubbleSort(group: experiencedPlayers,reverseOrder: true)
+        inexperiencedPlayers = bubbleSort(group: inexperiencedPlayers,reverseOrder: false)
         
-        //check if there are evenly sorted experienced players
-        var teamsExperience: [Int] = []
-        for sorted in sortedTeams {
-            var experience = 0
+        //attempt to evenly distribute players into teams
+        var teamIndex: [Int] = []
+        for _ in 0...teams.count - 1 {
+             for index2 in 0...teams.count - 1 {
+                 teamIndex.append(index2)
+             }
+         }
+        //prevent out of index in array if there isn't enough
+         for index in 0...teamIndex.count - 1  {
+            if index < experiencedPlayers.count {
+             sortedTeams[teamIndex[index]].team.append(experiencedPlayers[index])
+            }
+         }
+         for index in 0...teamIndex.count - 1  {
+            if index < inexperiencedPlayers.count {
+             sortedTeams[teamIndex[index]].team.append(inexperiencedPlayers[index])
+            }
+         }
+        
+         //get average height of teams
+         teamsAverageHeights = []
+         for sorted in sortedTeams{
+             teamsAverageHeights.append((averageHeight: calculateAverageHeight(ofTeam: sorted.team),teamName: sorted.teamName))
+         }
+        
+         //check if there are an even amount of experienced players on each team
+         var teamsExperience: [Int] = []
+         for sorted in sortedTeams {
+             var experience = 0
             
-            for player in sorted.team {
-                if player["experienced"] as! Bool {
-                    experience += 1
-                }
-            }
-            teamsExperience.append(experience)
-        }
+             for player in sorted.team {
+                 if player["experienced"] as! Bool {
+                     experience += 1
+                 }
+             }
+             teamsExperience.append(experience)
+         }
         
+         //condition checking
+         var experienceCheck = 0
         
-        //condition checking
-        var experienceCheck = 0
-        
-        //check teams experienced players count
-        for experience in teamsExperience{
-            if experienceCheck == 0 {
-            experienceCheck = experience
-            }
-            else if experience != experienceCheck {
-             print("Warning: Experienced players aren't distributed evenly.")
-                failed = true
-            }
-        }
+         //check teams experienced players count
+         for experience in teamsExperience{
+             if experienceCheck == 0 {
+                experienceCheck = experience
+                isSortable = true
+             }
+             else if experience != experienceCheck {
+                message += "Warning: Experienced players aren't distributed evenly.\n"
+             }
+         }
 
-        //check range of teams average heights
-        let min = returnMax(team: teamsAverageHeights)
-        let max = returnMin(team: teamsAverageHeights)
-        let range =  min - max
+         //check range of teams average heights
+         let min = returnMax(team: teamsAverageHeights)
+         let max = returnMin(team: teamsAverageHeights)
+         let range =  min - max
         
-        if range <= 1.5 {
+         if range <= 1.5 {
             isSortable = true
             finalRange = range
-            failed = true
-        }
-        else{
-        //reset sorted teams. Rearrange players and try again.
-            sortedTeams = teams
-            experiencedPlayers = movePlayerToEnd(ofGroup: experiencedPlayers)
-            inexperiencedPlayers = movePlayerToEnd(ofGroup: inexperiencedPlayers)
-        }
+         }
+         else{
+            isSortable = false
+            }
         
-        //too many tries. exit.
-        if attempts >= totalTrys {
-            failed = true
-        }
-        else{
-            attempts += 1
         }
     }
-}
-    return (teams: sortedTeams, isSorted: isSortable, averageHeights: teamsAverageHeights, range: finalRange)
+    
+    return (teams: sortedTeams, isSorted: (result: isSortable,message: message), averageHeights: teamsAverageHeights, range: finalRange)
 }
 
 //get sorted teams. Let the games.. begin!
-var result = sortPlayers(intoTeams: soccerLeauge, players: players)
+var sortedPlayers = sortPlayers(intoTeams: soccerLeauge, players: players)
 
 //if it was successful then print everything to the console
-if result.isSorted {
+if sortedPlayers.isSorted.result {
     
-    soccerLeauge = result.teams
+    soccerLeauge = sortedPlayers.teams
     
     //team demographics
     print("Team Demographics")
     print("-----------------")
-    print("Height Range: \(result.range)\n\n")
+    print("Height Range: \(sortedPlayers.range)\n\n")
     for team in soccerLeauge {
         
         //print team name and average height
-        for height in result.averageHeights {
+        for height in sortedPlayers.averageHeights {
             if height.teamName == team.teamName {
             print("Team: \(height.teamName)")
             print("-----------------")
@@ -301,5 +286,5 @@ if result.isSorted {
     
 }
 else{
-    print("Warning: There was a problem sorting your list. Please check the requirements and your players/teams list.")
+    print(sortedPlayers.isSorted.message)
 }
